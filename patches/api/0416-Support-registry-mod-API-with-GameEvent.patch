@@ -1,0 +1,156 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Sat, 25 Feb 2023 21:26:44 -0800
+Subject: [PATCH] Support registry mod API with GameEvent
+
+
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryKey.java b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+index a306377ce1ee8ad713f13949fd62425fdfa50297..964a2a64cef0637effc32946b9dbdbec10c35438 100644
+--- a/src/main/java/io/papermc/paper/registry/RegistryKey.java
++++ b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+@@ -26,6 +26,7 @@ public final class RegistryKey<T extends Keyed> {
+     /* ******************* *
+      * Built-in registries *
+      * ******************* */
++    public static final RegistryKey<GameEvent> GAME_EVENT = create("game_event", GameEvent.class);
+     public static final RegistryKey<StructureType> STRUCTURE_TYPE = create("worldgen/structure_type", StructureType.class);
+ 
+     /* ********************** *
+diff --git a/src/main/java/org/bukkit/GameEvent.java b/src/main/java/org/bukkit/GameEvent.java
+index a472a6b8d8e5525efcf13f3dcdb4871c9a7aa39b..b0a5b20e52d2af5e575dde3c917ccfaa4a61195a 100644
+--- a/src/main/java/org/bukkit/GameEvent.java
++++ b/src/main/java/org/bukkit/GameEvent.java
+@@ -10,9 +10,10 @@ import org.jetbrains.annotations.Nullable;
+ /**
+  * Represents a generic Mojang game event.
+  */
+-public final class GameEvent implements Keyed {
++@org.jetbrains.annotations.ApiStatus.NonExtendable // Paper
++@org.checkerframework.framework.qual.DefaultQualifier(NotNull.class) // Paper
++public abstract class GameEvent implements Keyed { // Paper
+ 
+-    private static final Map<NamespacedKey, GameEvent> GAME_EVENTS = new HashMap<>();
+     //
+     public static final GameEvent BLOCK_ACTIVATE = getEvent("block_activate");
+     public static final GameEvent BLOCK_ATTACH = getEvent("block_attach");
+@@ -95,10 +96,10 @@ public final class GameEvent implements Keyed {
+     //
+     private final NamespacedKey key;
+ 
+-    private GameEvent(NamespacedKey key) {
++    @org.jetbrains.annotations.ApiStatus.Internal // Paper
++    protected GameEvent(NamespacedKey key) { // Paper
+         this.key = key;
+ 
+-        GAME_EVENTS.put(key, this);
+     }
+ 
+     @NotNull
+@@ -112,10 +113,12 @@ public final class GameEvent implements Keyed {
+      *
+      * @param namespacedKey the key
+      * @return the event or null
++     * @deprecated use {@link Registry#GAME_EVENT}
+      */
+     @Nullable
++    @Deprecated // Paper
+     public static GameEvent getByKey(@NotNull NamespacedKey namespacedKey) {
+-        return GAME_EVENTS.get(namespacedKey);
++        return org.bukkit.Registry.GAME_EVENT.get(namespacedKey); // Paper
+     }
+ 
+     /**
+@@ -125,10 +128,51 @@ public final class GameEvent implements Keyed {
+      */
+     @NotNull
+     public static Collection<GameEvent> values() {
+-        return Collections.unmodifiableCollection(GAME_EVENTS.values());
++        return Collections.unmodifiableCollection(com.google.common.collect.Lists.newArrayList(Registry.GAME_EVENT));
+     }
+ 
+-    private static GameEvent getEvent(String vanilla) {
+-        return new GameEvent(NamespacedKey.minecraft(vanilla));
++    private static GameEvent getEvent(String vanilla) { // Paper
++        return java.util.Objects.requireNonNull(Registry.GAME_EVENT.get(NamespacedKey.minecraft(vanilla))); // Paper
+     }
++    // Paper start
++    /**
++     * Gets the range of the event which is used to
++     * notify listeners of the event.
++     *
++     * @return the range
++     */
++    public abstract int getRange();
++
++    /**
++     * Gets the vibration level of the game event for vibration listeners.
++     * Not all events have vibration levels, and a level of 0 means
++     * it won't cause any vibrations.
++     *
++     * @return the vibration level
++     */
++    public abstract int getVibrationLevel();
++
++    @org.jetbrains.annotations.ApiStatus.Experimental
++    @org.jetbrains.annotations.ApiStatus.NonExtendable
++    public interface Builder extends io.papermc.paper.registry.RegistryBuilder<GameEvent> {
++
++        /**
++         * Gets the range of the event which is used to
++         * notify listeners of the event.
++         *
++         * @return the range
++         */
++        int range();
++
++        /**
++         * Sets the range of the event which is used to
++         * notify listeners of the event.
++         *
++         * @param range the range
++         * @return the builder
++         */
++        @org.jetbrains.annotations.Contract("_ -> this")
++        @NotNull Builder range(int range);
++    }
++    // Paper end
+ }
+diff --git a/src/main/java/org/bukkit/Registry.java b/src/main/java/org/bukkit/Registry.java
+index 8bcf243a58a22addbcd361f91c8f6fb54b28a8d7..2802d6ff04e3b5349d155e2e7b08e215790eed4b 100644
+--- a/src/main/java/org/bukkit/Registry.java
++++ b/src/main/java/org/bukkit/Registry.java
+@@ -222,20 +222,7 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+      *
+      * @see GameEvent
+      */
+-    Registry<GameEvent> GAME_EVENT = new Registry<GameEvent>() {
+-
+-        @NotNull
+-        @Override
+-        public Iterator iterator() {
+-            return GameEvent.values().iterator();
+-        }
+-
+-        @Nullable
+-        @Override
+-        public GameEvent get(@NotNull NamespacedKey key) {
+-            return GameEvent.getByKey(key);
+-        }
+-    };
++    Registry<GameEvent> GAME_EVENT = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(io.papermc.paper.registry.RegistryKey.GAME_EVENT); // Paper
+     // Paper start
+     /**
+      * Configured structures.
+diff --git a/src/test/java/org/bukkit/LocationTest.java b/src/test/java/org/bukkit/LocationTest.java
+index 887305c05c3e53079347502c187984ca3e42a1f8..7d2014295c3792ed0e21f1bdec2547c175b31ebe 100644
+--- a/src/test/java/org/bukkit/LocationTest.java
++++ b/src/test/java/org/bukkit/LocationTest.java
+@@ -190,7 +190,7 @@ public class LocationTest {
+     }
+ 
+     private static Location getEmptyLocation() {
+-        return new Location(TestWorld.INSTANCE, 0, 0, 0);
++        return new Location(null, 0, 0, 0); // Paper
+     }
+ 
+     private Location getLocation() {

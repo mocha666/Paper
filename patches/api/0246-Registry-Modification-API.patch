@@ -1,0 +1,703 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Wed, 2 Mar 2022 13:36:21 -0800
+Subject: [PATCH] Registry Modification API
+
+
+diff --git a/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java b/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java
+index adbfa20e69b093af125f1aef7d138d9cb0fbeb3a..15dfdc10b5c8759112692602fe51970d2829d2b1 100644
+--- a/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java
++++ b/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java
+@@ -1,9 +1,18 @@
+ package io.papermc.paper.plugin.bootstrap;
+ 
++import io.papermc.paper.registry.RegistryManager;
+ import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
+ 
+ @ApiStatus.Experimental
+ @ApiStatus.NonExtendable
+ public interface BootstrapContext extends PluginProviderContext {
+ 
++    /**
++     * Provides the plugin's registry manager for
++     * handling registry events.
++     *
++     * @return the registry manager
++     */
++    @NotNull RegistryManager getRegistryManager();
+ }
+diff --git a/src/main/java/io/papermc/paper/registry/Reference.java b/src/main/java/io/papermc/paper/registry/Reference.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..393b24edcf7ed7e289f2c439860774fcd3fd64bd
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/Reference.java
+@@ -0,0 +1,71 @@
++package io.papermc.paper.registry;
++
++import net.kyori.adventure.key.Key;
++import org.bukkit.Keyed;
++import org.bukkit.NamespacedKey;
++import org.bukkit.Registry;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++/**
++ * Represents a reference to a server-backed registry value that may
++ * change or not exist. These are mainly useful for {@link io.papermc.paper.plugin.bootstrap.PluginBootstrap}s
++ * to have access to the vanilla keys of types without requiring the value to exist yet.
++ *
++ * @param <T> type of the value
++ */
++@ApiStatus.Experimental // since 1.19.4
++public interface Reference<T extends Keyed> extends Keyed {
++
++    /**
++     * Gets the value from the registry with the key.
++     *
++     * @return the value
++     * @throws java.util.NoSuchElementException if there is no value with this key
++     */
++    @NotNull T value();
++
++    /**
++     * Gets the value from the registry with the key.
++     *
++     * @return the value or null if it doesn't exist
++     */
++    @Nullable T valueOrNull();
++
++    /**
++     * Gets if the value exists at the key in the registry.
++     *
++     * @return true if the value exists
++     */
++    boolean exists();
++
++    @Override
++    @Deprecated(forRemoval = true)
++    @NotNull NamespacedKey getKey();
++
++    /**
++     * Creates a reference to a registered value.
++     *
++     * @param registry the registry the value is located in
++     * @param key the key to the value
++     * @param <T> the type of the value
++     * @return a reference
++     */
++    @Deprecated(forRemoval = true)
++    static <T extends Keyed> @NotNull Reference<T> create(@NotNull Registry<T> registry, @NotNull NamespacedKey key) {
++        return new ReferenceImpl<>(registry, key);
++    }
++
++    /**
++     * Creates a reference to a registered value.
++     *
++     * @param registryKey the registry key for the registry
++     * @param key the key to the value
++     * @param <T> the type of the value
++     * @return a reference
++     */
++    static <T extends Keyed> @NotNull Reference<T> create(@NotNull RegistryKey<T> registryKey, @NotNull Key key) {
++        return new ReferenceImpl<>(registryKey, key);
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/registry/ReferenceImpl.java b/src/main/java/io/papermc/paper/registry/ReferenceImpl.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4cf02f2b496a3c89b8d071a16147677b41eb5b28
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/ReferenceImpl.java
+@@ -0,0 +1,52 @@
++package io.papermc.paper.registry;
++
++import com.google.common.base.Suppliers;
++import java.util.function.Supplier;
++import net.kyori.adventure.key.Key;
++import org.bukkit.Keyed;
++import org.bukkit.NamespacedKey;
++import org.bukkit.Registry;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++import java.util.NoSuchElementException;
++
++record ReferenceImpl<T extends Keyed>(@NotNull Supplier<Registry<T>> registry, @NotNull Key key) implements Reference<T> {
++
++    ReferenceImpl(@NotNull Registry<T> registry, @NotNull Key key) {
++        this(() -> registry, key);
++    }
++
++    ReferenceImpl(@NotNull RegistryKey<T> registryKey, @NotNull Key key) {
++        this(Suppliers.memoize(() -> RegistryAccess.INSTANCE.getRegistry(registryKey)), key);
++    }
++
++    @Override
++    public @NotNull T value() {
++        final @Nullable T value = this.registry.get().get(this.key);
++        if (value == null) {
++            throw new NoSuchElementException("No such value with key " + this.key);
++        }
++        return value;
++    }
++
++    @Override
++    public @Nullable T valueOrNull() {
++        return this.registry.get().get(this.key);
++    }
++
++    @Override
++    public boolean exists() {
++        return this.registry.get().get(this.key) != null; // TODO replace with Registry#containsKey() when that's added
++    }
++
++    @Override
++    public @NotNull Key key() {
++        return this.key;
++    }
++
++    @Override
++    public @NotNull NamespacedKey getKey() {
++        return this.key instanceof NamespacedKey nsKey ? nsKey : new NamespacedKey(this.key.namespace(), this.key.value());
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryAccess.java b/src/main/java/io/papermc/paper/registry/RegistryAccess.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d998e607486a5f19b0e9f6d139bb3babf7e66d20
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/RegistryAccess.java
+@@ -0,0 +1,42 @@
++package io.papermc.paper.registry;
++
++import java.util.ServiceLoader;
++import org.bukkit.Keyed;
++import org.bukkit.Registry;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++/**
++ * The {@link #INSTANCE} provides access to registries given a {@link RegistryKey}.
++ * <p>
++ * Replacement for {@link org.bukkit.Bukkit#getRegistry(Class)}.
++ */
++@ApiStatus.NonExtendable
++@ApiStatus.Experimental
++public interface RegistryAccess {
++
++    RegistryAccess INSTANCE = ServiceLoader.load(RegistryAccess.class).iterator().next();
++
++    /**
++     * Gets the registry based on the type.
++     *
++     * @param type the type
++     * @return the registry or null if none found
++     * @param <T> the type
++     * @deprecated use {@link #getRegistry(RegistryKey)}
++     */
++    @Deprecated
++    <T extends Keyed> @Nullable Registry<T> getRegistry(@NotNull Class<T> type);
++
++    /**
++     * Gets the registry with the specified key.
++     *
++     * @param registryKey the key
++     * @return the registry
++     * @param <T> the type
++     * @throws java.util.NoSuchElementException if no registry with the key is found
++     * @throws IllegalArgumentException if the registry is not available yet
++     */
++    <T extends Keyed> @NotNull Registry<T> getRegistry(@NotNull RegistryKey<T> registryKey);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryBuilder.java b/src/main/java/io/papermc/paper/registry/RegistryBuilder.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..14e901c6731f1a2f9b36127d9d0f1c7c3c61e185
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/RegistryBuilder.java
+@@ -0,0 +1,13 @@
++package io.papermc.paper.registry;
++
++import org.bukkit.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++
++/**
++ * To be implemented by any type used for modifying registries.
++ */
++@ApiStatus.NonExtendable
++@ApiStatus.Experimental
++public interface RegistryBuilder<T extends net.kyori.adventure.key.Keyed> extends Keyed {
++
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryKey.java b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a306377ce1ee8ad713f13949fd62425fdfa50297
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/RegistryKey.java
+@@ -0,0 +1,64 @@
++package io.papermc.paper.registry;
++
++import com.google.common.collect.Sets;
++import java.util.Set;
++import net.kyori.adventure.key.Key;
++import net.kyori.adventure.key.Keyed;
++import org.bukkit.GameEvent;
++import org.bukkit.generator.structure.Structure;
++import org.bukkit.generator.structure.StructureType;
++import org.bukkit.inventory.meta.trim.TrimMaterial;
++import org.bukkit.inventory.meta.trim.TrimPattern;
++import org.intellij.lang.annotations.Subst;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * A unique key for each registry.
++ *
++ * @param <T> object type
++ */
++@ApiStatus.Experimental
++public final class RegistryKey<T extends Keyed> {
++
++    static final Set<RegistryKey<?>> REGISTRY_KEYS = Sets.newIdentityHashSet();
++
++    /* ******************* *
++     * Built-in registries *
++     * ******************* */
++    public static final RegistryKey<StructureType> STRUCTURE_TYPE = create("worldgen/structure_type", StructureType.class);
++
++    /* ********************** *
++     * Data-driven registries *
++     * ********************** */
++    public static final RegistryKey<Structure> STRUCTURE = create("worldgen/structure", Structure.class);
++    public static final RegistryKey<TrimMaterial> TRIM_MATERIAL = create("trim_material", TrimMaterial.class);
++    public static final RegistryKey<TrimPattern> TRIM_PATTERN = create("trim_pattern", TrimPattern.class);
++
++    private final Key key;
++    private final Class<T> type;
++
++    private RegistryKey(final Key key, final Class<T> type) {
++        this.key = key;
++        this.type = type;
++    }
++
++    public @NotNull Key key() {
++        return this.key;
++    }
++
++    public @NotNull Class<T> type() {
++        return this.type;
++    }
++
++    @Override
++    public String toString() {
++        return "RegistryKey[" + this.key + " / " + this.type.getSimpleName() + "]";
++    }
++
++    static <T extends Keyed> RegistryKey<T> create(@Subst("some_key") final String key, final Class<T> type) {
++        final RegistryKey<T> registryKey = new RegistryKey<>(Key.key(Key.MINECRAFT_NAMESPACE, key), type);
++        REGISTRY_KEYS.add(registryKey);
++        return registryKey;
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryManager.java b/src/main/java/io/papermc/paper/registry/RegistryManager.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..bba80f38b9a1ebaf06161332e369d227ec46f7c6
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/RegistryManager.java
+@@ -0,0 +1,39 @@
++package io.papermc.paper.registry;
++
++import io.papermc.paper.registry.event.listener.RegistryAdditionListener;
++import io.papermc.paper.registry.event.listener.RegistryPreFreezeListener;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Register listeners to points in a registry's lifecycle.
++ */
++@ApiStatus.NonExtendable
++@ApiStatus.Experimental
++public interface RegistryManager {
++
++    /**
++     * Register a listener which is called when an object is about
++     * to be added to the specified registry. Useful for modifying
++     * objects before they are added.
++     *
++     * @param registryKey the registry key
++     * @param listener an instance of the listener
++     * @param <T> object type
++     * @param <B> object builder type
++     */
++    <T extends Keyed, B extends RegistryBuilder<T>> void registerAdditionListener(@NotNull RegistryKey<T> registryKey, @NotNull RegistryAdditionListener<T, B> listener);
++
++    /**
++     * Register a listener which is called when a registry is about
++     * to be frozen. Useful for adding new entries to registries
++     * that support custom entries.
++     *
++     * @param registryKey the registry key
++     * @param listener an instance of the listener
++     * @param <T> object type
++     * @param <B> object builder type
++     */
++    <T extends Keyed, B extends RegistryBuilder<T>> void registerPreFreezeListener(@NotNull RegistryKey<T> registryKey, @NotNull RegistryPreFreezeListener<T, B> listener);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/RegistryView.java b/src/main/java/io/papermc/paper/registry/RegistryView.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..0476b1dc645d462662bd6cadddc1e99e87848ff5
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/RegistryView.java
+@@ -0,0 +1,25 @@
++package io.papermc.paper.registry;
++
++import net.kyori.adventure.key.Key;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.Contract;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++/**
++ * Provides read-only access to a registry.
++ *
++ * @param <T> registry object type
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface RegistryView<T extends Keyed> extends Iterable<T> {
++
++    @Nullable T get(final @NotNull Key key);
++
++    @NotNull T getOrThrow(final @NotNull Key key);
++
++    @Contract("_, !null -> !null")
++    @Nullable T getOrDefault(final @NotNull Key key, @Nullable T def);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/RegistryAdditionEvent.java b/src/main/java/io/papermc/paper/registry/event/RegistryAdditionEvent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f9d3d4a39350d7d473f39f41ea66d4b6bc155a3e
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/RegistryAdditionEvent.java
+@@ -0,0 +1,19 @@
++package io.papermc.paper.registry.event;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Event object for {@link io.papermc.paper.registry.event.listener.RegistryAdditionListener}.
++ *
++ * @param <T> object type
++ * @param <B> object builder type
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface RegistryAdditionEvent<T extends Keyed, B extends RegistryBuilder<T>> extends RegistryEvent<T, B> {
++
++    @NotNull B builder();
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/RegistryEvent.java b/src/main/java/io/papermc/paper/registry/event/RegistryEvent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d6a5298d4fece65e16d397ea2b8da26f2d3f4198
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/RegistryEvent.java
+@@ -0,0 +1,43 @@
++package io.papermc.paper.registry.event;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import io.papermc.paper.registry.RegistryKey;
++import io.papermc.paper.registry.RegistryView;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Base type for all registry events.
++ *
++ * @param <T> object type
++ * @param <B> object builder type
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface RegistryEvent<T extends Keyed, B extends RegistryBuilder<T>> {
++
++    /**
++     * Get the key for the registry this event pertains to.
++     *
++     * @return the registry key
++     */
++    @NotNull RegistryKey<T> registryKey();
++
++    /**
++     * Get a view of the registry which may or may not
++     * be complete based on the event.
++     *
++     * @return a registry view
++     */
++    @NotNull RegistryView<T> registryView();
++
++    /**
++     * Get the name of the event.
++     *
++     * @return the event name
++     */
++    default @NotNull String eventName() {
++        return this.getClass().getSimpleName();
++    }
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/RegistryPreFreezeEvent.java b/src/main/java/io/papermc/paper/registry/event/RegistryPreFreezeEvent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..582f8f907aa4dde1d11a65dcaa87b1bce31419bc
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/RegistryPreFreezeEvent.java
+@@ -0,0 +1,26 @@
++package io.papermc.paper.registry.event;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Event object for {@link io.papermc.paper.registry.event.listener.RegistryPreFreezeListener}.
++ *
++ * @param <T> object type
++ * @param <B> object builder type
++ */
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface RegistryPreFreezeEvent<T extends Keyed, B extends RegistryBuilder<T>> extends RegistryEvent<T, B> {
++
++    /**
++     * Get a view of the registry which supports
++     * the registering of new values.
++     *
++     * @return a writable registry view
++     */
++    @Override
++    @NotNull WritableRegistryView<T, B> registryView();
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/WritableRegistryView.java b/src/main/java/io/papermc/paper/registry/event/WritableRegistryView.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..39fcee759c591cb98bccc214550b72ec4d5e31a4
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/WritableRegistryView.java
+@@ -0,0 +1,28 @@
++package io.papermc.paper.registry.event;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import io.papermc.paper.registry.RegistryView;
++import java.util.function.Consumer;
++import net.kyori.adventure.key.Key;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * A registry view which supports registering new objects.
++ *
++ * @param <T> object type
++ * @param <B> object builder type
++ */
++@ApiStatus.NonExtendable
++@ApiStatus.Experimental
++public interface WritableRegistryView<T extends Keyed, B extends RegistryBuilder<T>> extends RegistryView<T> {
++
++    /**
++     * Register a new value with the specified key.
++     *
++     * @param key the object's key (must be unique from others)
++     * @param value a consumer for the object's builder
++     */
++    void register(@NotNull Key key, @NotNull Consumer<? super B> value);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/listener/RegistryAdditionListener.java b/src/main/java/io/papermc/paper/registry/event/listener/RegistryAdditionListener.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec4749da1c7068f7d125f6a9f94c77db341594c2
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/listener/RegistryAdditionListener.java
+@@ -0,0 +1,21 @@
++package io.papermc.paper.registry.event.listener;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import io.papermc.paper.registry.event.RegistryAdditionEvent;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Called before any object is added to the registry (including ones
++ * from any {@link RegistryPreFreezeListener} listeners).
++ *
++ * @param <B> builder type
++ */
++@ApiStatus.OverrideOnly
++@ApiStatus.Experimental
++@FunctionalInterface
++public interface RegistryAdditionListener<T extends Keyed, B extends RegistryBuilder<T>> {
++
++    void beforeRegister(@NotNull RegistryAdditionEvent<T, B> event);
++}
+diff --git a/src/main/java/io/papermc/paper/registry/event/listener/RegistryPreFreezeListener.java b/src/main/java/io/papermc/paper/registry/event/listener/RegistryPreFreezeListener.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..f1558de8054821d5a517cddc3ce426ce5ba0d1dc
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/registry/event/listener/RegistryPreFreezeListener.java
+@@ -0,0 +1,22 @@
++package io.papermc.paper.registry.event.listener;
++
++import io.papermc.paper.registry.RegistryBuilder;
++import io.papermc.paper.registry.event.RegistryPreFreezeEvent;
++import net.kyori.adventure.key.Keyed;
++import org.jetbrains.annotations.ApiStatus;
++import org.jetbrains.annotations.NotNull;
++
++/**
++ * Called after all other objects have been added to a registry (from
++ * built-in sources or datapacks depending on the registry type).
++ *
++ * @param <T> object type
++ * @param <B> builder type
++ */
++@ApiStatus.OverrideOnly
++@ApiStatus.Experimental
++@FunctionalInterface
++public interface RegistryPreFreezeListener<T extends Keyed, B extends RegistryBuilder<T>> {
++
++    void beforeFreeze(@NotNull RegistryPreFreezeEvent<T, B> event);
++}
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 531665375141dd8e070dcd68a864fc63e87bb762..d19b843bcd6a52148e3067b2e9a08f8860837eb6 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2198,8 +2198,11 @@ public final class Bukkit {
+      * @param tClass of the registry to get
+      * @param <T> type of the registry
+      * @return the corresponding registry or null if not present
++     * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)} with
++     * keys from {@link io.papermc.paper.registry.RegistryKey}.
+      */
+     @Nullable
++    @Deprecated // Paper
+     public static <T extends Keyed> Registry<T> getRegistry(@NotNull Class<T> tClass) {
+         return server.getRegistry(tClass);
+     }
+diff --git a/src/main/java/org/bukkit/Registry.java b/src/main/java/org/bukkit/Registry.java
+index 4a3c42f9c480c53f935d09bcc3656259c755661d..698138ab16a6b566279fcf635c7e2e43d460c012 100644
+--- a/src/main/java/org/bukkit/Registry.java
++++ b/src/main/java/org/bukkit/Registry.java
+@@ -138,14 +138,16 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+      * Server structures.
+      *
+      * @see Structure
++     * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)} with {@link io.papermc.paper.registry.RegistryKey#STRUCTURE}.
+      */
+-    Registry<Structure> STRUCTURE = Bukkit.getRegistry(Structure.class);
++    @Deprecated // Paper
++    Registry<Structure> STRUCTURE = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(Structure.class); // Paper
+     /**
+      * Server structure types.
+      *
+      * @see StructureType
+      */
+-    Registry<StructureType> STRUCTURE_TYPE = Bukkit.getRegistry(StructureType.class);
++    Registry<StructureType> STRUCTURE_TYPE = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(io.papermc.paper.registry.RegistryKey.STRUCTURE_TYPE); // Paper
+     /**
+      * Sound keys.
+      *
+@@ -156,18 +158,22 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+      * Trim materials.
+      *
+      * @see TrimMaterial
++     * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)} with {@link io.papermc.paper.registry.RegistryKey#TRIM_MATERIAL}.
+      */
+     @MinecraftExperimental
+     @ApiStatus.Experimental
+-    Registry<TrimMaterial> TRIM_MATERIAL = Bukkit.getRegistry(TrimMaterial.class);
++    @Deprecated // Paper
++    Registry<TrimMaterial> TRIM_MATERIAL = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(io.papermc.paper.registry.RegistryKey.TRIM_MATERIAL); // Paper
+     /**
+      * Trim patterns.
+      *
+      * @see TrimPattern
++     * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)} with {@link io.papermc.paper.registry.RegistryKey#TRIM_PATTERN}.
+      */
+     @MinecraftExperimental
+     @ApiStatus.Experimental
+-    Registry<TrimPattern> TRIM_PATTERN = Bukkit.getRegistry(TrimPattern.class);
++    @Deprecated // Paper
++    Registry<TrimPattern> TRIM_PATTERN = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(io.papermc.paper.registry.RegistryKey.TRIM_PATTERN); // Paper
+     /**
+      * Villager profession.
+      *
+@@ -239,6 +245,17 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+      */
+     @Nullable
+     T get(@NotNull NamespacedKey key);
++    // Paper start
++    /**
++     * Get the object by its key.
++     *
++     * @param key non-null key
++     * @return item or null if it does not exist
++     */
++    default @Nullable T get(@NotNull net.kyori.adventure.key.Key key) {
++        return key instanceof NamespacedKey nsKey ? this.get(nsKey) : this.get(new NamespacedKey(key.namespace(), key.value()));
++    }
++    // Paper end
+ 
+     /**
+      * Attempts to match the registered object with the given key.
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 204501e7964355d9f8b4e357e5fd636967752455..664ef350361b2bc73b4295991cd94c9a13eb8185 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -1867,8 +1867,11 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      * @param tClass of the registry to get
+      * @param <T> type of the registry
+      * @return the corresponding registry or null if not present
++     * @deprecated use {@link io.papermc.paper.registry.RegistryAccess#getRegistry(io.papermc.paper.registry.RegistryKey)} with
++     * keys from {@link io.papermc.paper.registry.RegistryKey}.
+      */
+     @Nullable
++    @Deprecated // Paper
+     <T extends Keyed> Registry<T> getRegistry(@NotNull Class<T> tClass);
+ 
+     /**
+diff --git a/src/test/java/io/papermc/paper/registry/TestRegistryAccess.java b/src/test/java/io/papermc/paper/registry/TestRegistryAccess.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..11174aa8703753d6a4eb95d849ed37280ced56e5
+--- /dev/null
++++ b/src/test/java/io/papermc/paper/registry/TestRegistryAccess.java
+@@ -0,0 +1,20 @@
++package io.papermc.paper.registry;
++
++import io.papermc.paper.testing.EmptyRegistry;
++import org.bukkit.Keyed;
++import org.bukkit.Registry;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++public class TestRegistryAccess implements RegistryAccess {
++
++    @Override
++    public @Nullable <T extends Keyed> Registry<T> getRegistry(@NotNull Class<T> type) {
++        return (Registry<T>) new EmptyRegistry();
++    }
++
++    @Override
++    public @NotNull <T extends Keyed> Registry<T> getRegistry(@NotNull RegistryKey<T> registryKey) {
++        return (Registry<T>) new EmptyRegistry();
++    }
++}
+diff --git a/src/test/resources/META-INF/services/io.papermc.paper.registry.RegistryAccess b/src/test/resources/META-INF/services/io.papermc.paper.registry.RegistryAccess
+new file mode 100644
+index 0000000000000000000000000000000000000000..f0a5e6d6b99aeef349fe465080ef2ff7b58617a6
+--- /dev/null
++++ b/src/test/resources/META-INF/services/io.papermc.paper.registry.RegistryAccess
+@@ -0,0 +1 @@
++io.papermc.paper.registry.TestRegistryAccess

@@ -194,12 +194,27 @@ index 0000000000000000000000000000000000000000..cdbc93b317b3bab47bf6552c29cfbb2c
 +    void clearPermissions();
 +
 +}
+diff --git a/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java b/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..adbfa20e69b093af125f1aef7d138d9cb0fbeb3a
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/plugin/bootstrap/BootstrapContext.java
+@@ -0,0 +1,9 @@
++package io.papermc.paper.plugin.bootstrap;
++
++import org.jetbrains.annotations.ApiStatus;
++
++@ApiStatus.Experimental
++@ApiStatus.NonExtendable
++public interface BootstrapContext extends PluginProviderContext {
++
++}
 diff --git a/src/main/java/io/papermc/paper/plugin/bootstrap/PluginBootstrap.java b/src/main/java/io/papermc/paper/plugin/bootstrap/PluginBootstrap.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ea84b11e8682e73fcd563fec65e76b707546a99e
+index 0000000000000000000000000000000000000000..d09e1f68de4938de0243b5732bd4bad63834b12a
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/plugin/bootstrap/PluginBootstrap.java
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,40 @@
 +package io.papermc.paper.plugin.bootstrap;
 +
 +import io.papermc.paper.plugin.provider.util.ProviderUtil;
@@ -226,8 +241,7 @@ index 0000000000000000000000000000000000000000..ea84b11e8682e73fcd563fec65e76b70
 +     *
 +     * @param context the server provided context
 +     */
-+    void bootstrap(@NotNull PluginProviderContext context);
-+
++    void bootstrap(@NotNull BootstrapContext context);
 +    /**
 +     * Called by the server to instantiate your main class.
 +     * Plugins may override this logic to define custom creation logic for said instance, like passing addition

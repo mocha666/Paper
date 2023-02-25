@@ -5,13 +5,13 @@ Subject: [PATCH] More PotionEffectType API
 
 
 diff --git a/src/main/java/org/bukkit/Registry.java b/src/main/java/org/bukkit/Registry.java
-index 39c13a459dede4992f5a3fa7309733820cfa44c5..fbd5a8fae7e72f3fb1098742c9680aeea1297fe7 100644
+index 253d9277e1875a26f09330f40a3b648b4689bd21..8bcf243a58a22addbcd361f91c8f6fb54b28a8d7 100644
 --- a/src/main/java/org/bukkit/Registry.java
 +++ b/src/main/java/org/bukkit/Registry.java
-@@ -238,6 +238,26 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
+@@ -244,6 +244,26 @@ public interface Registry<T extends Keyed> extends Iterable<T> {
       */
      @Deprecated(forRemoval = true)
-     Registry<io.papermc.paper.world.structure.ConfiguredStructure> CONFIGURED_STRUCTURE = Bukkit.getRegistry(io.papermc.paper.world.structure.ConfiguredStructure.class);
+     Registry<io.papermc.paper.world.structure.ConfiguredStructure> CONFIGURED_STRUCTURE = io.papermc.paper.registry.RegistryAccess.INSTANCE.getRegistry(io.papermc.paper.world.structure.ConfiguredStructure.class);
 +
 +    /**
 +     * Potion effect types.

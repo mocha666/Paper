@@ -1,0 +1,118 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Sat, 25 Feb 2023 21:25:08 -0800
+Subject: [PATCH] Support registry mod API with GameEvent
+
+
+diff --git a/src/main/java/io/papermc/paper/registry/PaperRegistries.java b/src/main/java/io/papermc/paper/registry/PaperRegistries.java
+index fca4761c622204aebc858106e34a19321b7a6966..4531b68edd4970e032bfc481dfd97bc91ee47e10 100644
+--- a/src/main/java/io/papermc/paper/registry/PaperRegistries.java
++++ b/src/main/java/io/papermc/paper/registry/PaperRegistries.java
+@@ -2,6 +2,7 @@ package io.papermc.paper.registry;
+ 
+ import com.google.common.collect.ImmutableList;
+ import io.papermc.paper.registry.entry.RegistryEntry;
++import io.papermc.paper.world.PaperGameEvent;
+ import io.papermc.paper.world.structure.ConfiguredStructure;
+ import io.papermc.paper.world.structure.PaperConfiguredStructure;
+ import java.util.IdentityHashMap;
+@@ -22,6 +23,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
+ 
+ import static io.papermc.paper.registry.entry.RegistryEntry.immutable;
+ import static io.papermc.paper.registry.entry.RegistryEntry.immutableBuiltIn;
++import static io.papermc.paper.registry.entry.RegistryEntry.writableBuiltIn;
+ 
+ public final class PaperRegistries {
+ 
+@@ -34,6 +36,7 @@ public final class PaperRegistries {
+     static {
+         REGISTRY_ENTRIES = ImmutableList.<RegistryEntry<?, ?>>builder()
+             // built-ins
++            .add(writableBuiltIn(RegistryKey.GAME_EVENT, Registries.GAME_EVENT, PaperGameEvent::new, io.papermc.paper.world.PaperGameEvent.Builder::new))
+             .add(immutableBuiltIn(RegistryKey.STRUCTURE_TYPE, Registries.STRUCTURE_TYPE, CraftStructureType::new))
+ 
+             // data-drivens
+diff --git a/src/main/java/io/papermc/paper/world/PaperGameEvent.java b/src/main/java/io/papermc/paper/world/PaperGameEvent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..655e7a9c88f7e1361ab1e089ad1de69b88de49b2
+--- /dev/null
++++ b/src/main/java/io/papermc/paper/world/PaperGameEvent.java
+@@ -0,0 +1,65 @@
++package io.papermc.paper.world;
++
++import io.papermc.paper.registry.PaperRegistryBuilder;
++import net.minecraft.world.level.gameevent.vibrations.VibrationListener;
++import org.bukkit.GameEvent;
++import org.bukkit.NamespacedKey;
++import org.checkerframework.checker.nullness.qual.NonNull;
++import org.checkerframework.checker.nullness.qual.Nullable;
++import org.checkerframework.framework.qual.DefaultQualifier;
++
++@DefaultQualifier(NonNull.class)
++public final class PaperGameEvent extends GameEvent {
++
++    private final net.minecraft.world.level.gameevent.GameEvent nms;
++
++    public PaperGameEvent(final NamespacedKey key, final net.minecraft.world.level.gameevent.GameEvent nms) {
++        super(key);
++        this.nms = nms;
++    }
++
++    @Override
++    public int getRange() {
++        return this.nms.getNotificationRadius();
++    }
++
++    @Override
++    public int getVibrationLevel() {
++        return VibrationListener.getGameEventFrequency(this.nms);
++    }
++
++    public static final class Builder implements GameEvent.Builder, PaperRegistryBuilder<net.minecraft.world.level.gameevent.GameEvent, GameEvent> {
++
++        private final NamespacedKey key;
++        private int range = 16;
++
++        public Builder(NamespacedKey key, net.minecraft.world.level.gameevent.@Nullable GameEvent nms) {
++            this.key = key;
++            if (nms != null) {
++                this.range = nms.getNotificationRadius();
++            }
++        }
++
++        @Override
++        public NamespacedKey getKey() {
++            return this.key;
++        }
++
++        @Override
++        public int range() {
++            return this.range;
++        }
++
++        @Override
++        public Builder range(int range) {
++            this.range = range;
++            return this;
++        }
++
++        @Override
++        public net.minecraft.world.level.gameevent.GameEvent build() {
++            return new net.minecraft.world.level.gameevent.GameEvent(this.key.value(), this.range);
++        }
++    }
++
++}
+diff --git a/src/main/java/net/minecraft/world/level/gameevent/GameEvent.java b/src/main/java/net/minecraft/world/level/gameevent/GameEvent.java
+index 21e1148ccc3d9c86de811d50a0c4d5b4a4d131f8..bae83976675ab86f9f9277394c83a28633a51de5 100644
+--- a/src/main/java/net/minecraft/world/level/gameevent/GameEvent.java
++++ b/src/main/java/net/minecraft/world/level/gameevent/GameEvent.java
+@@ -81,7 +81,7 @@ public class GameEvent {
+     }
+ 
+     private static GameEvent register(String id, int range) {
+-        return Registry.register(BuiltInRegistries.GAME_EVENT, id, new GameEvent(id, range));
++        return io.papermc.paper.registry.PaperRegistryListenerManager.INSTANCE.registerWithListeners(BuiltInRegistries.GAME_EVENT, id, new GameEvent(id, range)); // Paper
+     }
+ 
+     @Override
