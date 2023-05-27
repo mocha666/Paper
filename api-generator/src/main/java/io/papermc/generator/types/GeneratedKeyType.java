@@ -38,7 +38,7 @@ public class GeneratedKeyType implements SourceGenerator {
     protected TypeSpec createTypeSpec() {
         final TypeSpec.Builder builder = TypeSpec.classBuilder(this.keysClassName)
             .addModifiers(PUBLIC, FINAL)
-            .addJavadoc("Vanilla %s keys\n".formatted(this.typeName))
+            .addJavadoc("Vanilla $L keys\n", this.typeName)
             .addAnnotation(AnnotationSpec.builder(ClassName.get("io.papermc.paper.generated", "GeneratedFrom"))
                 .addMember("value", "$S", SharedConstants.getCurrentVersion().getName())
                 .build()
@@ -50,8 +50,8 @@ public class GeneratedKeyType implements SourceGenerator {
         for (final ResourceLocation key : this.registry.keySet()) {
             final String fieldName = key.getPath().toUpperCase(Locale.ENGLISH);
             builder.addField(FieldSpec.builder(Key.class, fieldName, PUBLIC, STATIC, FINAL)
-                .initializer("Key.key($S)", key.getPath())
-                .addJavadoc("%s key: {@code %s}".formatted(this.typeName, key.toString()))
+                .initializer("$T.key($S)", Key.class, key.getPath())
+                .addJavadoc("$L key: {@code $L}", this.typeName, key.toString())
                 .build()
             );
         }

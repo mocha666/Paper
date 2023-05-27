@@ -6,7 +6,7 @@ plugins {
 }
 
 minecraft {
-    version("1.19.4")
+    version(property("mcVersion").toString())
     platform(MinecraftPlatform.SERVER)
 
     runs {
