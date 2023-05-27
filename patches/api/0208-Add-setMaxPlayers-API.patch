@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mariell Hoversholm <proximyst@proximyst.com>
+Date: Sat, 22 Aug 2020 23:59:25 +0200
+Subject: [PATCH] Add #setMaxPlayers API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index c14067d03cfe4c75896d9d1409f0fca57793f7d0..ba146ba3f3dac06a5e7cde3897bbb44288183ff6 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -208,6 +208,17 @@ public final class Bukkit {
+         return server.getMaxPlayers();
+     }
+ 
++    // Paper start
++    /**
++     * Set the maximum amount of players which can login to this server.
++     *
++     * @param maxPlayers the amount of players this server allows
++     */
++    public static void setMaxPlayers(int maxPlayers) {
++        server.setMaxPlayers(maxPlayers);
++    }
++    // Paper end
++
+     /**
+      * Get the game port that the server runs on.
+      *
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 0944406ccb12104ea0ec3371e731d8fd0b8f600d..72900dd9d4e8050dc4ec902de4b3e5cc717273b6 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -160,6 +160,15 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     public int getMaxPlayers();
+ 
++    // Paper start
++    /**
++     * Set the maximum amount of players which can login to this server.
++     *
++     * @param maxPlayers the amount of players this server allows
++     */
++    public void setMaxPlayers(int maxPlayers);
++    // Paper end
++
+     /**
+      * Get the game port that the server runs on.
+      *
