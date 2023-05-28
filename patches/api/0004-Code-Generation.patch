@@ -6,6 +6,26 @@ Subject: [PATCH] Code Generation
 Currently includes generated key holder classes for types
 used in the Registry Modification API
 
+diff --git a/build.gradle.kts b/build.gradle.kts
+index 97ba0ab8e268ba2f937143aaa5b68ea6f6cbfb88..435326b6918ecc8ab63f7ff59b2c92da1ee86da1 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -105,3 +105,15 @@ tasks.check {
+     dependsOn(scanJar)
+ }
+ // Paper end
++// Paper start
++// TODO uncomment once paperweight is updated to include this task type
++// val scanJarForOldGeneratedCode = tasks.register("scanJarForOldGeneratedCode", io.papermc.paperweight.tasks.ScanJarForOldGeneratedCode::class) {
++//     mcVersion.set(providers.gradleProperty("mcVersion"))
++//     annotation.set("Lio/papermc/paper/generated/GeneratedFrom;")
++//     jarToScan.set(tasks.jar.flatMap { it.archiveFile })
++//     classpath.from(configurations.compileClasspath)
++// }
++// tasks.check {
++//     dependsOn(scanJarForOldGeneratedCode)
++// }
++// Paper end
 diff --git a/src/main/java/io/papermc/paper/generated/GameEventKeys.java b/src/main/java/io/papermc/paper/generated/GameEventKeys.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..9b3ee48996fe269fa9f1c21b46bde4b3b607799e
@@ -266,10 +286,10 @@ index 0000000000000000000000000000000000000000..9b3ee48996fe269fa9f1c21b46bde4b3
 +}
 diff --git a/src/main/java/io/papermc/paper/generated/GeneratedFrom.java b/src/main/java/io/papermc/paper/generated/GeneratedFrom.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..2feefdc9658e1cd6f25f798421c0683411c4fec4
+index 0000000000000000000000000000000000000000..87325f75e258717fef01ff5fee4dde7ae6fd8cd2
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/generated/GeneratedFrom.java
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,20 @@
 +package io.papermc.paper.generated;
 +
 +import java.lang.annotation.Documented;
@@ -283,11 +303,10 @@ index 0000000000000000000000000000000000000000..2feefdc9658e1cd6f25f798421c06834
 + * Used to mark classes which are generated from
 + * a specific version of minecraft.
 + */
-+@ApiStatus.Internal
 +@Documented
-+@Retention(RetentionPolicy.CLASS)
++@Retention(RetentionPolicy.RUNTIME)
 +@Target(ElementType.TYPE)
-+public @interface GeneratedFrom {
++@interface GeneratedFrom {
 +
 +    String value();
 +}
