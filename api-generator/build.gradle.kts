@@ -18,7 +18,7 @@ minecraft {
 
 dependencies {
     implementation("com.squareup:javapoet:1.13.0")
-    implementation("net.kyori:adventure-key:4.13.1")
+    implementation(project(":paper-api"))
 }
 
 group = "io.papermc.paper"
