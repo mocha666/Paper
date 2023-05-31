@@ -12,6 +12,7 @@ minecraft {
     runs {
         server("generate") {
             mainClass("io.papermc.generator.Main")
+            args(project(":paper-api-generated").projectDir.toPath().resolve("src/main/java").toString())
         }
     }
 }

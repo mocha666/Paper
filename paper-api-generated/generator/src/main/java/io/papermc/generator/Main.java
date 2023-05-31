@@ -5,6 +5,7 @@ import io.papermc.generator.types.GeneratedKeyType;
 import io.papermc.generator.types.SourceGenerator;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,7 +21,6 @@ public final class Main {
     }
 
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Path OUTPUT = Path.of("output");
 
     private static final List<SourceGenerator> GENERATORS = List.of(
         new GeneratedKeyType("GameEventKeys", "GameEvent", "io.papermc.paper.generated", BuiltInRegistries.GAME_EVENT)
@@ -30,18 +30,18 @@ public final class Main {
     }
 
     public static void main(final String[] args) {
-
+        final Path output = Paths.get(args[0]);
         try {
-            if (Files.exists(OUTPUT)) {
-                PathUtils.deleteDirectory(OUTPUT);
+            if (Files.exists(output)) {
+                PathUtils.deleteDirectory(output);
             }
-            Files.createDirectories(OUTPUT);
+            Files.createDirectories(output);
 
             for (final SourceGenerator generator : GENERATORS) {
-                generator.writeToFile(OUTPUT);
+                generator.writeToFile(output);
             }
 
-            LOGGER.info("Files written to {}", OUTPUT.toAbsolutePath());
+            LOGGER.info("Files written to {}", output.toAbsolutePath());
         } catch (final Exception ex) {
             throw new RuntimeException(ex);
         }

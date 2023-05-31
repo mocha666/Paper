@@ -23,11 +23,6 @@ import net.minecraft.resources.ResourceLocation;
 import org.bukkit.GameEvent;
 import org.intellij.lang.annotations.Subst;
 
-import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PUBLIC;
-import static javax.lang.model.element.Modifier.STATIC;
-
 public class GeneratedKeyType implements SourceGenerator {
 
     private final String keysClassName;
@@ -46,8 +41,8 @@ public class GeneratedKeyType implements SourceGenerator {
         final TypeName typedKey = ParameterizedTypeName.get(TypedKey.class, GameEvent.class);
 
         final MethodSpec create = MethodSpec.methodBuilder("create")
-            .addModifiers(PUBLIC, STATIC)
-            .addParameter(ParameterSpec.builder(String.class, "key", FINAL)
+            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+            .addParameter(ParameterSpec.builder(String.class, "key", Modifier.FINAL)
                 .addAnnotation(AnnotationSpec.builder(Subst.class)
                     .addMember("value", "$S", "some_key")
                     .build()
@@ -59,19 +54,19 @@ public class GeneratedKeyType implements SourceGenerator {
             .build();
 
         final TypeSpec.Builder builder = TypeSpec.classBuilder(this.keysClassName)
-            .addModifiers(PUBLIC, FINAL)
+            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addJavadoc("Vanilla $L keys\n", this.typeName)
             .addAnnotation(AnnotationSpec.builder(ClassName.get("io.papermc.paper.generated", "GeneratedFrom"))
                 .addMember("value", "$S", SharedConstants.getCurrentVersion().getName())
                 .build()
             ).addMethod(MethodSpec.constructorBuilder()
-                .addModifiers(PRIVATE)
+                .addModifiers(Modifier.PRIVATE)
                 .build()
             ).addMethod(create);
 
         for (final ResourceLocation key : this.registry.keySet()) {
             final String fieldName = key.getPath().toUpperCase(Locale.ENGLISH);
-            builder.addField(FieldSpec.builder(typedKey, fieldName, PUBLIC, STATIC, FINAL)
+            builder.addField(FieldSpec.builder(typedKey, fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
                 .initializer("$N($S)", create, key.getPath())
                 .addJavadoc("$L key: {@code $L}", this.typeName, key.toString())
                 .build()
@@ -94,6 +89,8 @@ public class GeneratedKeyType implements SourceGenerator {
 
     @Override
     public void writeToFile(final Path parent) throws IOException {
-        Files.writeString(parent.resolve(this.keysClassName + ".java"), this.outputString(), StandardCharsets.UTF_8);
+        final Path pkgDir = parent.resolve(this.pkg.replace('.', '/'));
+        Files.createDirectories(pkgDir);
+        Files.writeString(pkgDir.resolve(this.keysClassName + ".java"), this.outputString(), StandardCharsets.UTF_8);
     }
 }

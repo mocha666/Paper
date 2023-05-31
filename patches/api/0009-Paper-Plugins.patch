@@ -5,10 +5,10 @@ Subject: [PATCH] Paper Plugins
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index cff3eb363b17c2a8245b3b2ceb02cbdc1efe3896..03b2fc4c6dd9cbc9f28add7da9420c816f8faa2b 100644
+index c34f0c61e0dfa43ed2bf230748cbea00d4761735..5b8626cbb6f49d75b0ebaf40c71c8960bdfc4641 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -45,7 +45,7 @@ dependencies {
+@@ -46,7 +46,7 @@ dependencies {
      implementation("org.ow2.asm:asm-commons:9.4")
      // Paper end
  

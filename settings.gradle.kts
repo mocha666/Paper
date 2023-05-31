@@ -46,4 +46,6 @@ if (testPlugin.exists()) {
 } else {
     testPlugin.writeText("// Uncomment to enable the test plugin module\n//include(\":test-plugin\")\n")
 }
-include("api-generator")
+// include("api-generator")
+include("paper-api-generated")
+include(":paper-api-generated:generator")

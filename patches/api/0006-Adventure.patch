@@ -7,10 +7,10 @@ Co-authored-by: zml <zml@stellardrift.ca>
 Co-authored-by: Jake Potrebic <jake.m.potrebic@gmail.com>
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 5fccd83117c2c153951d102756acfd4862b8c51b..acf12dfbecb9360c0921f70ed31650feecd33f12 100644
+index 4cc5b99ab9f1da8118afab66aada86104b34af19..267ac2b9a0d1f0d58a9b286c85584be63e3500d1 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -8,11 +8,24 @@ java {
+@@ -8,12 +8,25 @@ java {
      withJavadocJar()
  }
  
@@ -29,6 +29,7 @@ index 5fccd83117c2c153951d102756acfd4862b8c51b..acf12dfbecb9360c0921f70ed31650fe
 +
  dependencies {
      // api dependencies are listed transitively to API consumers
+     api(project(":paper-api-generated"))
      api("com.google.guava:guava:31.1-jre")
      api("com.google.code.gson:gson:2.10")
 -    api("net.md-5:bungeecord-chat:1.16-R0.4")
@@ -36,7 +37,7 @@ index 5fccd83117c2c153951d102756acfd4862b8c51b..acf12dfbecb9360c0921f70ed31650fe
      api("org.yaml:snakeyaml:1.33")
      api("org.joml:joml:1.10.5")
      // Paper start
-@@ -20,6 +33,13 @@ dependencies {
+@@ -21,6 +34,13 @@ dependencies {
          isTransitive = false // includes junit
      }
      api("it.unimi.dsi:fastutil:8.5.6")
@@ -50,7 +51,7 @@ index 5fccd83117c2c153951d102756acfd4862b8c51b..acf12dfbecb9360c0921f70ed31650fe
      // Paper end
  
      compileOnly("org.apache.maven:maven-resolver-provider:3.8.5")
-@@ -80,10 +100,25 @@ tasks.withType<Javadoc> {
+@@ -81,10 +101,25 @@ tasks.withType<Javadoc> {
          "https://guava.dev/releases/31.1-jre/api/docs/",
          "https://javadoc.io/doc/org.yaml/snakeyaml/1.33/",
          "https://javadoc.io/doc/org.jetbrains/annotations/23.0.0/", // Paper - we don't want Java 5 annotations
