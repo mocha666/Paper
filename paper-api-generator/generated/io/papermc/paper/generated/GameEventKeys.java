@@ -4,6 +4,7 @@ import io.papermc.paper.registry.TypedKey;
 import net.kyori.adventure.key.Key;
 import org.bukkit.GameEvent;
 import org.intellij.lang.annotations.Subst;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Vanilla GameEvent keys
@@ -253,7 +254,7 @@ public final class GameEventKeys {
     private GameEventKeys() {
     }
 
-    public static TypedKey<GameEvent> create(@Subst("some_key") final String key) {
+    public static @NotNull TypedKey<GameEvent> create(@Subst("some_key") final @NotNull String key) {
         return TypedKey.create(Key.key(key)/*, RegistryKey.GAME_EVENT */);
     }
 }

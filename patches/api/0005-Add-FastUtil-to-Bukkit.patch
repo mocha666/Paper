@@ -6,10 +6,10 @@ Subject: [PATCH] Add FastUtil to Bukkit
 Doesn't expose to plugins, just allows Paper-API to use it for optimization
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index c5fe3182c453e2e4561bc1ac9ac1acca6acc15f8..4cc5b99ab9f1da8118afab66aada86104b34af19 100644
+index fc7631745698403fe128549e5644dbf24a75852b..87276c032c4d4a20dc96c0494b4fc4563cd150a0 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -20,6 +20,7 @@ dependencies {
+@@ -19,6 +19,7 @@ dependencies {
      api("com.googlecode.json-simple:json-simple:1.1.1") {
          isTransitive = false // includes junit
      }

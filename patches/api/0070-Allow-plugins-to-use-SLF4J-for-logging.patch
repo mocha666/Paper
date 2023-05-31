@@ -14,10 +14,10 @@ it without having to shade it in the plugin and going through
 several layers of logging abstraction.
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 5b8626cbb6f49d75b0ebaf40c71c8960bdfc4641..5c88a03b249bafa392236afeba6a62589948fb0f 100644
+index 126fcee5785c9c1b44feeef050610cf8d8325743..a615d79bd17e394f09b492b72386345b8734c4fa 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -41,6 +41,8 @@ dependencies {
+@@ -40,6 +40,8 @@ dependencies {
      apiAndDocs("net.kyori:adventure-text-serializer-legacy")
      apiAndDocs("net.kyori:adventure-text-serializer-plain")
      apiAndDocs("net.kyori:adventure-text-logger-slf4j")
