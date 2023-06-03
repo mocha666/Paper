@@ -47,7 +47,7 @@ public final class BiomeKeys {
      * {@code minecraft:cherry_grove}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<Biome> CHERRY_GROVE = create(key("cherry_grove"));
 
     /**

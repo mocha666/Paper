@@ -122,3 +122,13 @@ index 0000000000000000000000000000000000000000..7a1f8fe92debceda2ca8c34c0e6cbbf7
 +
 +record TypedKeyImpl<T extends Keyed>(@NotNull Key key /*, RegistryKey<T> registryKey */) implements TypedKey<T> {
 +}
+diff --git a/src/main/java/org/bukkit/MinecraftExperimental.java b/src/main/java/org/bukkit/MinecraftExperimental.java
+index 4e7e69219876eb6162f6e2cdf2ac3d242f7d75f6..b325b96711dd69e8fa21f6abf307994d9e72caa3 100644
+--- a/src/main/java/org/bukkit/MinecraftExperimental.java
++++ b/src/main/java/org/bukkit/MinecraftExperimental.java
+@@ -24,4 +24,5 @@ import org.jetbrains.annotations.ApiStatus;
+ })
+ @ApiStatus.Internal
+ public @interface MinecraftExperimental {
++    String value() default ""; // Paper
+ }

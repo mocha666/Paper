@@ -39,12 +39,9 @@ public final class Main {
     static {
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
-        // Populate available packs
         PackRepository resourceRepository = new PackRepository(new ServerPacksSource());
         resourceRepository.reload();
-        // Set up resource manager
         MultiPackResourceManager resourceManager = new MultiPackResourceManager(PackType.SERVER_DATA, resourceRepository.getAvailablePacks().stream().map(Pack::open).toList());
-        // add tags and loot tables for unit tests
         LayeredRegistryAccess<RegistryLayer> layers = RegistryLayer.createRegistryAccess();
         layers = WorldLoader.loadAndReplaceLayer(resourceManager, layers, RegistryLayer.WORLDGEN, RegistryDataLoader.WORLDGEN_REGISTRIES);
         REGISTRY_ACCESS = layers.compositeAccess().freeze();

@@ -18,76 +18,76 @@ import org.jetbrains.annotations.NotNull;
 })
 @GeneratedFrom("1.19.4")
 @ApiStatus.Experimental
-@MinecraftExperimental
+@MinecraftExperimental("update 1.20")
 public final class TrimMaterialKeys {
     /**
      * {@code minecraft:amethyst}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> AMETHYST = create(key("amethyst"));
 
     /**
      * {@code minecraft:copper}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> COPPER = create(key("copper"));
 
     /**
      * {@code minecraft:diamond}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> DIAMOND = create(key("diamond"));
 
     /**
      * {@code minecraft:emerald}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> EMERALD = create(key("emerald"));
 
     /**
      * {@code minecraft:gold}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> GOLD = create(key("gold"));
 
     /**
      * {@code minecraft:iron}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> IRON = create(key("iron"));
 
     /**
      * {@code minecraft:lapis}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> LAPIS = create(key("lapis"));
 
     /**
      * {@code minecraft:netherite}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> NETHERITE = create(key("netherite"));
 
     /**
      * {@code minecraft:quartz}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> QUARTZ = create(key("quartz"));
 
     /**
      * {@code minecraft:redstone}
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static final TypedKey<TrimMaterial> REDSTONE = create(key("redstone"));
 
     private TrimMaterialKeys() {
@@ -100,7 +100,7 @@ public final class TrimMaterialKeys {
      * @returns a new typed key
      */
     @ApiStatus.Experimental
-    @MinecraftExperimental
+    @MinecraftExperimental("update 1.20")
     public static @NotNull TypedKey<TrimMaterial> create(final @NotNull Key key) {
         return TypedKey.create(key/*, <insert registry key here from reg mod API> */);
     }

@@ -45,7 +45,9 @@ public class GeneratedKeyType<T> implements SourceGenerator {
 
     private static final List<AnnotationSpec> EXPERIMENTAL_ANNOTATIONS = List.of(
         AnnotationSpec.builder(ApiStatus.Experimental.class).build(),
-        AnnotationSpec.builder(MinecraftExperimental.class).build()
+        AnnotationSpec.builder(MinecraftExperimental.class)
+            .addMember("value", "$S", "update 1.20")
+            .build()
     );
 
     private static final String CREATE_JAVADOC = """
@@ -113,7 +115,7 @@ public class GeneratedKeyType<T> implements SourceGenerator {
         for (final T value : registry) {
             final ResourceKey<T> key = registry.getResourceKey(value).orElseThrow();
             final String keyPath = key.location().getPath();
-            final String fieldName = keyPath.toUpperCase(Locale.ENGLISH);
+            final String fieldName = keyPath.toUpperCase(Locale.ENGLISH).replaceAll("[.-/]", "_"); // replace invalid field name chars
             final FieldSpec.Builder fieldBuilder = FieldSpec.builder(typedKey, fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
                 .initializer("$N(key($S))", createMethod.build(), keyPath)
                 .addJavadoc("{@code $L}", key.location().toString());
