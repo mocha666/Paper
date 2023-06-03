@@ -94,7 +94,7 @@ public class GeneratedKeyType<T> implements SourceGenerator {
 
         final TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(this.keysClassName)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addJavadoc("Vanilla keys for $L.\n", this.apiType.getSimpleName())
+            .addJavadoc("Vanilla keys for {@link $T}.\n", this.apiType)
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
                 .addMember("value", "$S", "unused")
                 .addMember("value", "$S", "SpellCheckingInspection")

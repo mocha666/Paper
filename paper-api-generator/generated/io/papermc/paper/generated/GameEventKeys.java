@@ -8,7 +8,7 @@ import org.bukkit.GameEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Vanilla keys for GameEvent.
+ * Vanilla keys for {@link GameEvent}.
  */
 @SuppressWarnings({
         "unused",

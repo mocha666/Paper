@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Vanilla keys for Biome.
+ * Vanilla keys for {@link Biome}.
  */
 @SuppressWarnings({
         "unused",

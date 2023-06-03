@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Vanilla keys for TrimPattern.
+ * Vanilla keys for {@link TrimPattern}.
  */
 @SuppressWarnings({
         "unused",
