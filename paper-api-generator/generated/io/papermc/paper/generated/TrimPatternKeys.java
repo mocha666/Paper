@@ -21,77 +21,77 @@ import org.jetbrains.annotations.NotNull;
 @MinecraftExperimental
 public final class TrimPatternKeys {
     /**
-     * {@link TrimPattern} key: {@code minecraft:coast}
+     * {@code minecraft:coast}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> COAST = create(key("coast"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:dune}
+     * {@code minecraft:dune}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> DUNE = create(key("dune"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:eye}
+     * {@code minecraft:eye}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> EYE = create(key("eye"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:rib}
+     * {@code minecraft:rib}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> RIB = create(key("rib"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:sentry}
+     * {@code minecraft:sentry}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> SENTRY = create(key("sentry"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:snout}
+     * {@code minecraft:snout}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> SNOUT = create(key("snout"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:spire}
+     * {@code minecraft:spire}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> SPIRE = create(key("spire"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:tide}
+     * {@code minecraft:tide}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> TIDE = create(key("tide"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:vex}
+     * {@code minecraft:vex}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> VEX = create(key("vex"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:ward}
+     * {@code minecraft:ward}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimPattern> WARD = create(key("ward"));
 
     /**
-     * {@link TrimPattern} key: {@code minecraft:wild}
+     * {@code minecraft:wild}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
@@ -100,6 +100,12 @@ public final class TrimPatternKeys {
     private TrimPatternKeys() {
     }
 
+    /**
+     * Creates a typed key for {@link TrimPattern}.
+     *
+     * @param key the key for the object
+     * @returns a new typed key
+     */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static @NotNull TypedKey<TrimPattern> create(final @NotNull Key key) {

@@ -1,6 +1,5 @@
 package io.papermc.generator.types;
 
-import com.mojang.serialization.Lifecycle;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -11,6 +10,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import io.papermc.generator.Main;
+import io.papermc.generator.utils.CollectingContext;
 import io.papermc.paper.registry.TypedKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,12 +26,9 @@ import javax.lang.model.element.Modifier;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderGetter;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.data.registries.UpdateOneTwentyRegistries;
-import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.resources.ResourceKey;
 import org.bukkit.MinecraftExperimental;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -46,35 +43,31 @@ public class GeneratedKeyType<T> implements SourceGenerator {
     private static final Map<ResourceKey<? extends Registry<?>>, RegistrySetBuilder.RegistryBootstrap<?>> EXPERIMENTAL_REGISTRY_ENTRIES = UpdateOneTwentyRegistries.BUILDER.entries.stream()
             .collect(Collectors.toMap(RegistrySetBuilder.RegistryStub::key, RegistrySetBuilder.RegistryStub::bootstrap));
 
-    record CollectingContext<T>(List<ResourceKey<T>> registered, Registry<T> registry) implements BootstapContext<T> {
-
-        @Override
-        public Holder.Reference<T> register(final ResourceKey<T> resourceKey, final @NonNull T t, final Lifecycle lifecycle) {
-            this.registered.add(resourceKey);
-            return Holder.Reference.createStandAlone(this.registry.holderOwner(), resourceKey);
-        }
-
-        @Override
-        public <S> HolderGetter<S> lookup(final ResourceKey<? extends Registry<? extends S>> resourceKey) {
-            return Main.REGISTRY_ACCESS.registryOrThrow(resourceKey).asLookup();
-        }
-    }
-
     private static final List<AnnotationSpec> EXPERIMENTAL_ANNOTATIONS = List.of(
         AnnotationSpec.builder(ApiStatus.Experimental.class).build(),
         AnnotationSpec.builder(MinecraftExperimental.class).build()
     );
 
+    private static final String CREATE_JAVADOC = """
+        Creates a typed key for {@link $T}.
+        
+        @param key the key for the object
+        @returns a new typed key
+        """;
+    // TODO when RegistryKey is available, add second param here: @param registryKey the registry key for the type
+
     private final String keysClassName;
     private final Class<?> apiType;
     private final String pkg;
     private final ResourceKey<? extends Registry<T>> registryKey;
+    private final boolean publicCreateKeyMethod;
 
-    public GeneratedKeyType(final String keysClassName, final Class<? extends Keyed> apiType, final String pkg, final ResourceKey<? extends Registry<T>> registryKey) {
+    public GeneratedKeyType(final String keysClassName, final Class<? extends Keyed> apiType, final String pkg, final ResourceKey<? extends Registry<T>> registryKey, final boolean publicCreateKeyMethod) {
         this.keysClassName = keysClassName;
         this.apiType = apiType;
         this.pkg = pkg;
         this.registryKey = registryKey;
+        this.publicCreateKeyMethod = publicCreateKeyMethod;
     }
 
     protected TypeSpec createTypeSpec() {
@@ -84,13 +77,17 @@ public class GeneratedKeyType<T> implements SourceGenerator {
         final TypeName keyType = TypeName.get(Key.class)
             .annotated(notNull);
 
-        final MethodSpec.Builder create = MethodSpec.methodBuilder("create")
-            .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        final MethodSpec.Builder createMethod = MethodSpec.methodBuilder("create")
+            .addModifiers(this.publicCreateKeyMethod ? Modifier.PUBLIC : Modifier.PRIVATE, Modifier.STATIC)
             .addParameter(ParameterSpec.builder(keyType, "key", Modifier.FINAL)
                 .build()
             )
             .addCode("return $T.create(key/*, <insert registry key here from reg mod API> */);", TypedKey.class)
             .returns(typedKey.annotated(notNull));
+
+        if (this.publicCreateKeyMethod) {
+            createMethod.addJavadoc(CREATE_JAVADOC, this.apiType);
+        }
 
         final TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(this.keysClassName)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -118,8 +115,8 @@ public class GeneratedKeyType<T> implements SourceGenerator {
             final String keyPath = key.location().getPath();
             final String fieldName = keyPath.toUpperCase(Locale.ENGLISH);
             final FieldSpec.Builder fieldBuilder = FieldSpec.builder(typedKey, fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                .initializer("$N(key($S))", create.build(), keyPath)
-                .addJavadoc("{@link $T} key: {@code $L}", this.apiType, key.location().toString());
+                .initializer("$N(key($S))", createMethod.build(), keyPath)
+                .addJavadoc("{@code $L}", key.location().toString());
             if (experimental.contains(key)) {
                 fieldBuilder.addAnnotations(EXPERIMENTAL_ANNOTATIONS);
             } else {
@@ -129,9 +126,9 @@ public class GeneratedKeyType<T> implements SourceGenerator {
         }
         if (allExperimental) {
             typeBuilder.addAnnotations(EXPERIMENTAL_ANNOTATIONS);
-            create.addAnnotations(EXPERIMENTAL_ANNOTATIONS);
+            createMethod.addAnnotations(EXPERIMENTAL_ANNOTATIONS);
         }
-        return typeBuilder.addMethod(create.build()).build();
+        return typeBuilder.addMethod(createMethod.build()).build();
     }
 
     @SuppressWarnings("unchecked")

@@ -21,70 +21,70 @@ import org.jetbrains.annotations.NotNull;
 @MinecraftExperimental
 public final class TrimMaterialKeys {
     /**
-     * {@link TrimMaterial} key: {@code minecraft:amethyst}
+     * {@code minecraft:amethyst}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> AMETHYST = create(key("amethyst"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:copper}
+     * {@code minecraft:copper}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> COPPER = create(key("copper"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:diamond}
+     * {@code minecraft:diamond}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> DIAMOND = create(key("diamond"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:emerald}
+     * {@code minecraft:emerald}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> EMERALD = create(key("emerald"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:gold}
+     * {@code minecraft:gold}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> GOLD = create(key("gold"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:iron}
+     * {@code minecraft:iron}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> IRON = create(key("iron"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:lapis}
+     * {@code minecraft:lapis}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> LAPIS = create(key("lapis"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:netherite}
+     * {@code minecraft:netherite}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> NETHERITE = create(key("netherite"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:quartz}
+     * {@code minecraft:quartz}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static final TypedKey<TrimMaterial> QUARTZ = create(key("quartz"));
 
     /**
-     * {@link TrimMaterial} key: {@code minecraft:redstone}
+     * {@code minecraft:redstone}
      */
     @ApiStatus.Experimental
     @MinecraftExperimental
@@ -93,6 +93,12 @@ public final class TrimMaterialKeys {
     private TrimMaterialKeys() {
     }
 
+    /**
+     * Creates a typed key for {@link TrimMaterial}.
+     *
+     * @param key the key for the object
+     * @returns a new typed key
+     */
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static @NotNull TypedKey<TrimMaterial> create(final @NotNull Key key) {

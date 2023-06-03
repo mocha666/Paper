@@ -7,13 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.LayeredRegistryAccess;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.RegistryDataLoader;
 import net.minecraft.resources.ResourceKey;
@@ -28,6 +26,7 @@ import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import org.apache.commons.io.file.PathUtils;
 import org.bukkit.GameEvent;
 import org.bukkit.block.Biome;
+import org.bukkit.generator.structure.StructureType;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
 import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.slf4j.Logger;
@@ -52,14 +51,15 @@ public final class Main {
     }
 
     private static final List<SourceGenerator> GENERATORS = List.of(
-        simpleKey("GameEventKeys", GameEvent.class, Registries.GAME_EVENT),
-        simpleKey("BiomeKeys", Biome.class, Registries.BIOME),
-        simpleKey("TrimMaterialKeys", TrimMaterial.class, Registries.TRIM_MATERIAL),
-        simpleKey("TrimPatternKeys", TrimPattern.class, Registries.TRIM_PATTERN)
+        simpleKey("GameEventKeys", GameEvent.class, Registries.GAME_EVENT, true),
+        simpleKey("BiomeKeys", Biome.class, Registries.BIOME, true),
+        simpleKey("TrimMaterialKeys", TrimMaterial.class, Registries.TRIM_MATERIAL, true),
+        simpleKey("TrimPatternKeys", TrimPattern.class, Registries.TRIM_PATTERN, true),
+        simpleKey("StructureTypeKeys", StructureType.class, Registries.STRUCTURE_TYPE, false)
     );
 
-    private static <T> SourceGenerator simpleKey(final String className, final Class<? extends Keyed> apiType, final ResourceKey<? extends Registry<T>> registryKey) {
-        return new GeneratedKeyType<>(className, apiType, "io.papermc.paper.generated", registryKey);
+    private static <T> SourceGenerator simpleKey(final String className, final Class<? extends Keyed> apiType, final ResourceKey<? extends Registry<T>> registryKey, final boolean publicCreateKeyMethod) {
+        return new GeneratedKeyType<>(className, apiType, "io.papermc.paper.generated", registryKey, publicCreateKeyMethod);
     }
 
     private Main() {
