@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Vanilla keys for TrimPattern.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({
+        "unused",
+        "SpellCheckingInspection"
+})
 @GeneratedFrom("1.19.4")
 @ApiStatus.Experimental
 @MinecraftExperimental

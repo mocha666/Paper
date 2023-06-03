@@ -10,7 +10,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Vanilla keys for GameEvent.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({
+        "unused",
+        "SpellCheckingInspection"
+})
 @GeneratedFrom("1.19.4")
 public final class GameEventKeys {
     /**

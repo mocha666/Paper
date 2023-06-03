@@ -97,6 +97,7 @@ public class GeneratedKeyType<T> implements SourceGenerator {
             .addJavadoc("Vanilla keys for $L.\n", this.apiType.getSimpleName())
             .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
                 .addMember("value", "$S", "unused")
+                .addMember("value", "$S", "SpellCheckingInspection")
                 .build()
             )
             .addAnnotation(AnnotationSpec.builder(ClassName.get("io.papermc.paper.generated", "GeneratedFrom"))
