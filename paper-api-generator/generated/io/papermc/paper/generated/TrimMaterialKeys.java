@@ -93,6 +93,6 @@ public final class TrimMaterialKeys {
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static @NotNull TypedKey<TrimMaterial> create(final @NotNull Key key) {
-        return TypedKey.create(key/*, RegistryKey.GAME_EVENT */);
+        return TypedKey.create(key/*, <insert registry key here from reg mod API> */);
     }
 }

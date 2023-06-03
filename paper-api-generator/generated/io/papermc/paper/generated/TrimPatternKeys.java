@@ -100,6 +100,6 @@ public final class TrimPatternKeys {
     @ApiStatus.Experimental
     @MinecraftExperimental
     public static @NotNull TypedKey<TrimPattern> create(final @NotNull Key key) {
-        return TypedKey.create(key/*, RegistryKey.GAME_EVENT */);
+        return TypedKey.create(key/*, <insert registry key here from reg mod API> */);
     }
 }
