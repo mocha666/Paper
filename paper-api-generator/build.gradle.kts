@@ -12,6 +12,7 @@ minecraft {
     runs {
         server("generate") {
             mainClass("io.papermc.generator.Main")
+            accessWideners(projectDir.toPath().resolve("wideners.at"))
             args(projectDir.toPath().resolve("generated").toString())
         }
     }

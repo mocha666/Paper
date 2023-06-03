@@ -1,0 +1,2 @@
+accessWidener	v1	named
+accessible method net/minecraft/server/WorldLoader loadAndReplaceLayer (Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/core/LayeredRegistryAccess;Lnet/minecraft/server/RegistryLayer;Ljava/util/List;)Lnet/minecraft/core/LayeredRegistryAccess;
