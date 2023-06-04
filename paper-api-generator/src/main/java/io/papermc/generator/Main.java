@@ -56,7 +56,7 @@ public final class Main {
     );
 
     private static <T> SourceGenerator simpleKey(final String className, final Class<? extends Keyed> apiType, final ResourceKey<? extends Registry<T>> registryKey, final boolean publicCreateKeyMethod) {
-        return new GeneratedKeyType<>(className, apiType, "io.papermc.paper.generated", registryKey, publicCreateKeyMethod);
+        return new GeneratedKeyType<>(className, apiType, "io.papermc.paper.generated", registryKey, "null", publicCreateKeyMethod);
     }
 
     private Main() {

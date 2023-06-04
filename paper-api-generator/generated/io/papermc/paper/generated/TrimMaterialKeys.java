@@ -94,14 +94,15 @@ public final class TrimMaterialKeys {
     }
 
     /**
-     * Creates a typed key for {@link TrimMaterial}.
+     * Creates a key for {@link TrimMaterial} in a registry.
      *
-     * @param key the key for the object
+     * @param key the value's key in the registry
+     * @param registryKey the registry's key
      * @return a new typed key
      */
     @ApiStatus.Experimental
     @MinecraftExperimental("update 1.20")
     public static @NotNull TypedKey<TrimMaterial> create(final @NotNull Key key) {
-        return TypedKey.create(key/*, <insert registry key here from reg mod API> */);
+        return TypedKey.create(key, null);
     }
 }

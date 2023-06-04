@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.lang.model.element.Modifier;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.key.Keyed;
 import net.minecraft.SharedConstants;
@@ -30,12 +29,17 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.data.registries.UpdateOneTwentyRegistries;
 import net.minecraft.resources.ResourceKey;
-import org.bukkit.MinecraftExperimental;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+
+import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static io.papermc.generator.types.Annotations.EXPERIMENTAL_ANNOTATIONS;
+import static io.papermc.generator.types.Annotations.NOT_NULL;
+import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 @DefaultQualifier(NonNull.class)
 public class GeneratedKeyType<T> implements SourceGenerator {
@@ -43,70 +47,68 @@ public class GeneratedKeyType<T> implements SourceGenerator {
     private static final Map<ResourceKey<? extends Registry<?>>, RegistrySetBuilder.RegistryBootstrap<?>> EXPERIMENTAL_REGISTRY_ENTRIES = UpdateOneTwentyRegistries.BUILDER.entries.stream()
             .collect(Collectors.toMap(RegistrySetBuilder.RegistryStub::key, RegistrySetBuilder.RegistryStub::bootstrap));
 
-    private static final List<AnnotationSpec> EXPERIMENTAL_ANNOTATIONS = List.of(
-        AnnotationSpec.builder(ApiStatus.Experimental.class).build(),
-        AnnotationSpec.builder(MinecraftExperimental.class)
-            .addMember("value", "$S", "update 1.20")
-            .build()
-    );
-
+    private static final AnnotationSpec SUPPRESS_WARNINGS = AnnotationSpec.builder(SuppressWarnings.class)
+        .addMember("value", "$S", "unused")
+        .addMember("value", "$S", "SpellCheckingInspection")
+        .build();
+    private static final AnnotationSpec GENERATED_FROM = AnnotationSpec.builder(ClassName.get("io.papermc.paper.generated", "GeneratedFrom"))
+        .addMember("value", "$S", SharedConstants.getCurrentVersion().getName())
+        .build();
     private static final String CREATE_JAVADOC = """
-        Creates a typed key for {@link $T}.
+        Creates a key for {@link $T} in a registry.
         
-        @param key the key for the object
+        @param key the value's key in the registry
+        @param registryKey the registry's key
         @return a new typed key
         """;
-    // TODO when RegistryKey is available, add second param here: @param registryKey the registry key for the type
 
     private final String keysClassName;
     private final Class<?> apiType;
     private final String pkg;
     private final ResourceKey<? extends Registry<T>> registryKey;
+    private final String apiRegistryKey;
     private final boolean publicCreateKeyMethod;
 
-    public GeneratedKeyType(final String keysClassName, final Class<? extends Keyed> apiType, final String pkg, final ResourceKey<? extends Registry<T>> registryKey, final boolean publicCreateKeyMethod) {
+    public GeneratedKeyType(final String keysClassName, final Class<? extends Keyed> apiType, final String pkg, final ResourceKey<? extends Registry<T>> registryKey, final String apiRegistryKey, final boolean publicCreateKeyMethod) {
         this.keysClassName = keysClassName;
         this.apiType = apiType;
         this.pkg = pkg;
         this.registryKey = registryKey;
+        this.apiRegistryKey = apiRegistryKey;
         this.publicCreateKeyMethod = publicCreateKeyMethod;
     }
 
-    protected TypeSpec createTypeSpec() {
-        final AnnotationSpec notNull = AnnotationSpec.builder(NotNull.class).build();
-        final TypeName typedKey = ParameterizedTypeName.get(TypedKey.class, this.apiType);
+    private MethodSpec.Builder createMethod(final TypeName returnType) {
+        final TypeName keyType = TypeName.get(Key.class).annotated(NOT_NULL);
 
-        final TypeName keyType = TypeName.get(Key.class)
-            .annotated(notNull);
-
-        final MethodSpec.Builder createMethod = MethodSpec.methodBuilder("create")
-            .addModifiers(this.publicCreateKeyMethod ? Modifier.PUBLIC : Modifier.PRIVATE, Modifier.STATIC)
-            .addParameter(ParameterSpec.builder(keyType, "key", Modifier.FINAL)
-                .build()
-            )
-            .addCode("return $T.create(key/*, <insert registry key here from reg mod API> */);", TypedKey.class)
-            .returns(typedKey.annotated(notNull));
-
+        final ParameterSpec keyParam = ParameterSpec.builder(keyType, "key", FINAL).build();
+        final MethodSpec.Builder create = MethodSpec.methodBuilder("create")
+            .addModifiers(this.publicCreateKeyMethod ? PUBLIC : PRIVATE, STATIC)
+            .addParameter(keyParam)
+            .addCode("return $T.create($N, $L);", TypedKey.class, keyParam, this.apiRegistryKey)
+            .returns(returnType.annotated(NOT_NULL));
         if (this.publicCreateKeyMethod) {
-            createMethod.addJavadoc(CREATE_JAVADOC, this.apiType);
+            create.addJavadoc(CREATE_JAVADOC, this.apiType);
         }
+        return create;
+    }
 
-        final TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(this.keysClassName)
-            .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addJavadoc("Vanilla keys for {@link $T}.\n", this.apiType)
-            .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class)
-                .addMember("value", "$S", "unused")
-                .addMember("value", "$S", "SpellCheckingInspection")
-                .build()
-            )
-            .addAnnotation(AnnotationSpec.builder(ClassName.get("io.papermc.paper.generated", "GeneratedFrom"))
-                .addMember("value", "$S", SharedConstants.getCurrentVersion().getName())
-                .build()
-            )
+    private TypeSpec.Builder keyHolderType() {
+        return classBuilder(this.keysClassName)
+            .addModifiers(PUBLIC, FINAL)
+            .addJavadoc("Vanilla keys for {@link $T}.", this.apiType)
+            .addAnnotation(SUPPRESS_WARNINGS).addAnnotation(GENERATED_FROM)
             .addMethod(MethodSpec.constructorBuilder()
-                .addModifiers(Modifier.PRIVATE)
+                .addModifiers(PRIVATE)
                 .build()
             );
+    }
+
+    protected TypeSpec createTypeSpec() {
+        final TypeName typedKey = ParameterizedTypeName.get(TypedKey.class, this.apiType);
+
+        final TypeSpec.Builder typeBuilder = this.keyHolderType();
+        final MethodSpec.Builder createMethod = this.createMethod(typedKey);
 
         final Registry<T> registry = Main.REGISTRY_ACCESS.registryOrThrow(this.registryKey);
         final List<ResourceKey<T>> experimental = this.collectExperimentalKeys(registry);
@@ -116,7 +118,7 @@ public class GeneratedKeyType<T> implements SourceGenerator {
             final ResourceKey<T> key = registry.getResourceKey(value).orElseThrow();
             final String keyPath = key.location().getPath();
             final String fieldName = keyPath.toUpperCase(Locale.ENGLISH).replaceAll("[.-/]", "_"); // replace invalid field name chars
-            final FieldSpec.Builder fieldBuilder = FieldSpec.builder(typedKey, fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+            final FieldSpec.Builder fieldBuilder = FieldSpec.builder(typedKey, fieldName, PUBLIC, STATIC, FINAL)
                 .initializer("$N(key($S))", createMethod.build(), keyPath)
                 .addJavadoc("{@code $L}", key.location().toString());
             if (experimental.contains(key)) {

@@ -260,12 +260,13 @@ public final class GameEventKeys {
     }
 
     /**
-     * Creates a typed key for {@link GameEvent}.
+     * Creates a key for {@link GameEvent} in a registry.
      *
-     * @param key the key for the object
+     * @param key the value's key in the registry
+     * @param registryKey the registry's key
      * @return a new typed key
      */
     public static @NotNull TypedKey<GameEvent> create(final @NotNull Key key) {
-        return TypedKey.create(key/*, <insert registry key here from reg mod API> */);
+        return TypedKey.create(key, null);
     }
 }

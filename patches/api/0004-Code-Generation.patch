@@ -85,10 +85,10 @@ index 0000000000000000000000000000000000000000..87325f75e258717fef01ff5fee4dde7a
 +}
 diff --git a/src/main/java/io/papermc/paper/registry/TypedKey.java b/src/main/java/io/papermc/paper/registry/TypedKey.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..273a96dae8ad0fccdeec6e3f3262a18a73697fc3
+index 0000000000000000000000000000000000000000..ceaf8ebbbfaa44cea7dbafd514e1edf2e38b4d07
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/registry/TypedKey.java
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,44 @@
 +package io.papermc.paper.registry;
 +
 +import net.kyori.adventure.key.Key;
@@ -96,21 +96,46 @@ index 0000000000000000000000000000000000000000..273a96dae8ad0fccdeec6e3f3262a18a
 +import org.jetbrains.annotations.ApiStatus;
 +import org.jetbrains.annotations.NotNull;
 +
-+public interface TypedKey<T extends Keyed> extends Keyed {
++/**
++ * Represents a key for a value in a specific registry.
++ *
++ * @param <T> the value type for the registry
++ */
++@ApiStatus.Experimental
++public sealed interface TypedKey<T extends Keyed> extends Keyed permits TypedKeyImpl {
 +
++    /**
++     * Gets the key for the value in the registry.
++     *
++     * @return the value's key
++     */
 +    @Override
 +    @NotNull Key key();
 +
-+    // @NotNull RegistryKey<T> registryKey();
++    /**
++     * Gets the registry key for the value this key
++     * represents.
++     *
++     * @return the registry key
++     */
++    @NotNull Void registryKey();
 +
-+    @ApiStatus.Internal
-+    static <T extends Keyed> @NotNull TypedKey<T> create(@NotNull Key key/* , @NotNull RegistryKey<T> registryKey */) {
-+        return new TypedKeyImpl<>(key/* , registryKey */);
++    /**
++     * Create a typed key from a key and a registry key.
++     *
++     * @param key the key for the value in the registry
++     * @param registryKey the registry this key is for
++     * @return a new key for the value key and registry key
++     * @param <T> value type
++     */
++    @ApiStatus.Experimental
++    static <T extends Keyed> @NotNull TypedKey<T> create(@NotNull Key key, @NotNull Void registryKey) {
++        return new TypedKeyImpl<>(key, registryKey);
 +    }
 +}
 diff --git a/src/main/java/io/papermc/paper/registry/TypedKeyImpl.java b/src/main/java/io/papermc/paper/registry/TypedKeyImpl.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..7a1f8fe92debceda2ca8c34c0e6cbbf777e388a0
+index 0000000000000000000000000000000000000000..6f62fd37d015322afc31537cec7c8e745faafd6d
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/registry/TypedKeyImpl.java
 @@ -0,0 +1,8 @@
@@ -120,7 +145,7 @@ index 0000000000000000000000000000000000000000..7a1f8fe92debceda2ca8c34c0e6cbbf7
 +import net.kyori.adventure.key.Keyed;
 +import org.jetbrains.annotations.NotNull;
 +
-+record TypedKeyImpl<T extends Keyed>(@NotNull Key key /*, RegistryKey<T> registryKey */) implements TypedKey<T> {
++record TypedKeyImpl<T extends Keyed>(@NotNull Key key, @NotNull Void registryKey) implements TypedKey<T> {
 +}
 diff --git a/src/main/java/org/bukkit/MinecraftExperimental.java b/src/main/java/org/bukkit/MinecraftExperimental.java
 index 4e7e69219876eb6162f6e2cdf2ac3d242f7d75f6..b325b96711dd69e8fa21f6abf307994d9e72caa3 100644
