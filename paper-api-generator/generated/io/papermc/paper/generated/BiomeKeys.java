@@ -347,7 +347,7 @@ public final class BiomeKeys {
      * Creates a typed key for {@link Biome}.
      *
      * @param key the key for the object
-     * @returns a new typed key
+     * @return a new typed key
      */
     public static @NotNull TypedKey<Biome> create(final @NotNull Key key) {
         return TypedKey.create(key/*, <insert registry key here from reg mod API> */);

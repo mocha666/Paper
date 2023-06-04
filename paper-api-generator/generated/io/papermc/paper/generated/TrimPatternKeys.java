@@ -104,7 +104,7 @@ public final class TrimPatternKeys {
      * Creates a typed key for {@link TrimPattern}.
      *
      * @param key the key for the object
-     * @returns a new typed key
+     * @return a new typed key
      */
     @ApiStatus.Experimental
     @MinecraftExperimental("update 1.20")

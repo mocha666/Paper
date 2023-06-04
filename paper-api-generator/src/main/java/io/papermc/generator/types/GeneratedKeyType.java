@@ -54,7 +54,7 @@ public class GeneratedKeyType<T> implements SourceGenerator {
         Creates a typed key for {@link $T}.
         
         @param key the key for the object
-        @returns a new typed key
+        @return a new typed key
         """;
     // TODO when RegistryKey is available, add second param here: @param registryKey the registry key for the type
 

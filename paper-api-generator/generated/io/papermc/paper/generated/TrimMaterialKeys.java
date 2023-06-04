@@ -97,7 +97,7 @@ public final class TrimMaterialKeys {
      * Creates a typed key for {@link TrimMaterial}.
      *
      * @param key the key for the object
-     * @returns a new typed key
+     * @return a new typed key
      */
     @ApiStatus.Experimental
     @MinecraftExperimental("update 1.20")
