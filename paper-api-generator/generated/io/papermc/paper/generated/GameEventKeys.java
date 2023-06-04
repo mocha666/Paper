@@ -263,7 +263,6 @@ public final class GameEventKeys {
      * Creates a key for {@link GameEvent} in a registry.
      *
      * @param key the value's key in the registry
-     * @param registryKey the registry's key
      * @return a new typed key
      */
     public static @NotNull TypedKey<GameEvent> create(final @NotNull Key key) {

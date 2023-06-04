@@ -104,7 +104,6 @@ public final class TrimPatternKeys {
      * Creates a key for {@link TrimPattern} in a registry.
      *
      * @param key the value's key in the registry
-     * @param registryKey the registry's key
      * @return a new typed key
      */
     @ApiStatus.Experimental

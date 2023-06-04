@@ -97,7 +97,6 @@ public final class TrimMaterialKeys {
      * Creates a key for {@link TrimMaterial} in a registry.
      *
      * @param key the value's key in the registry
-     * @param registryKey the registry's key
      * @return a new typed key
      */
     @ApiStatus.Experimental
