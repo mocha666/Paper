@@ -78,6 +78,11 @@ jobs:
         if: fromJSON(steps.determine.outputs.result).action == 'paperclip'
         run: ./gradlew createReobfPaperclipJar --stacktrace
 
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts ${{ env.Compile_Date }}
+          path: build/libs/
       - name: Upload Paperclip Jar
         if: fromJSON(steps.determine.outputs.result).action == 'paperclip'
         uses: actions/upload-artifact@v3
